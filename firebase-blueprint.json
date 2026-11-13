@@ -1,0 +1,270 @@
+{
+  "entities": {
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized bakery administrator record for role-based access control",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 200
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "role", "createdAt", "updatedAt"]
+    },
+    "SiteSettingsDoc": {
+      "title": "SiteSettingsDoc",
+      "description": "Global bakery branding, contact, pickup banner, and SEO settings",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "tagline": { "type": "string", "maxLength": 300 },
+        "logoUrl": { "type": "string", "maxLength": 900000 },
+        "faviconUrl": { "type": "string", "maxLength": 900000 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "email": { "type": "string", "maxLength": 200 },
+        "address": { "type": "string", "maxLength": 400 },
+        "googleMapsUrl": { "type": "string", "maxLength": 1000 },
+        "instagramUrl": { "type": "string", "maxLength": 500 },
+        "facebookUrl": { "type": "string", "maxLength": 500 },
+        "pinterestUrl": { "type": "string", "maxLength": 500 },
+        "seoTitle": { "type": "string", "maxLength": 200 },
+        "seoDescription": { "type": "string", "maxLength": 500 },
+        "seoKeywords": { "type": "string", "maxLength": 500 },
+        "pickupNotice": { "type": "string", "maxLength": 500 },
+        "showPickupBanner": { "type": "boolean" },
+        "maintenanceMode": { "type": "boolean" },
+        "visitCount": { "type": "number" },
+        "isPublic": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["siteName", "tagline", "phone", "email", "address", "pickupNotice", "showPickupBanner", "maintenanceMode", "visitCount", "isPublic", "updatedAt"]
+    },
+    "HomepageDoc": {
+      "title": "HomepageDoc",
+      "description": "Homepage hero, welcome narrative, and call-to-action copy",
+      "type": "object",
+      "properties": {
+        "heroImage": { "type": "string", "maxLength": 900000 },
+        "heroTitle": { "type": "string", "maxLength": 200 },
+        "tagline": { "type": "string", "maxLength": 300 },
+        "welcomeTitle": { "type": "string", "maxLength": 200 },
+        "welcomeSubtitle": { "type": "string", "maxLength": 300 },
+        "welcomeStory": { "type": "string", "maxLength": 2000 },
+        "ctaText1": { "type": "string", "maxLength": 100 },
+        "ctaText2": { "type": "string", "maxLength": 100 },
+        "featuredSectionTitle": { "type": "string", "maxLength": 200 },
+        "pickupNotice": { "type": "string", "maxLength": 500 },
+        "isPublic": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["heroImage", "heroTitle", "tagline", "welcomeTitle", "welcomeStory", "isPublic", "updatedAt"]
+    },
+    "AboutDoc": {
+      "title": "AboutDoc",
+      "description": "About page heritage story, bakers, milestones, and promises",
+      "type": "object",
+      "properties": {
+        "storyTitle": { "type": "string", "maxLength": 200 },
+        "storyParagraphs": { "type": "array", "description": "Story paragraphs list (max 15)" },
+        "mission": { "type": "string", "maxLength": 1000 },
+        "vision": { "type": "string", "maxLength": 1000 },
+        "bakers": { "type": "array", "description": "Pastry chef profiles list (max 20)" },
+        "timeline": { "type": "array", "description": "Milestone objects list (max 25)" },
+        "qualityPromises": { "type": "array", "description": "Quality promises list (max 20)" },
+        "isPublic": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["storyTitle", "storyParagraphs", "mission", "vision", "bakers", "timeline", "qualityPromises", "isPublic", "updatedAt"]
+    },
+    "StoreDirectionsDoc": {
+      "title": "StoreDirectionsDoc",
+      "description": "Physical store location, map embed, and parking instructions",
+      "type": "object",
+      "properties": {
+        "address": { "type": "string", "maxLength": 500 },
+        "landmark": { "type": "string", "maxLength": 300 },
+        "googleMapsUrl": { "type": "string", "maxLength": 1000 },
+        "mapEmbedUrl": { "type": "string", "maxLength": 1000 },
+        "transportGuide": { "type": "string", "maxLength": 1500 },
+        "isPublic": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["address", "landmark", "googleMapsUrl", "mapEmbedUrl", "transportGuide", "isPublic", "updatedAt"]
+    },
+    "BusinessHoursDoc": {
+      "title": "BusinessHoursDoc",
+      "description": "Weekly opening hours schedule",
+      "type": "object",
+      "properties": {
+        "hours": { "type": "array", "description": "7 day schedule objects" },
+        "isPublic": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["hours", "isPublic", "updatedAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Artisanal bakery catalog item with pricing, ratings, and dietary details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "category": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "price": { "type": "number" },
+        "rateUnit": { "type": "string", "maxLength": 60 },
+        "rating": { "type": "number" },
+        "ratingCount": { "type": "number" },
+        "description": { "type": "string", "maxLength": 2000 },
+        "image": { "type": "string", "maxLength": 900000 },
+        "availabilityBadge": { "type": "string", "maxLength": 60 },
+        "isFeatured": { "type": "boolean" },
+        "isHidden": { "type": "boolean" },
+        "ingredients": { "type": "array", "description": "Ingredient list (max 30)" },
+        "allergens": { "type": "array", "description": "Allergen list (max 20)" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "category", "price", "rateUnit", "rating", "ratingCount", "description", "image", "availabilityBadge", "isFeatured", "isHidden", "ingredients", "allergens", "createdAt", "updatedAt"]
+    },
+    "GalleryItem": {
+      "title": "GalleryItem",
+      "description": "Bakery visual showcase entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "category": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "imageUrl": { "type": "string", "maxLength": 900000 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "uploadDate": { "type": "string", "maxLength": 40 },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "category", "imageUrl", "isPublic", "createdAt", "updatedAt"]
+    },
+    "Testimonial": {
+      "title": "Testimonial",
+      "description": "Customer review displayed after moderation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_-]+$" },
+        "authorUid": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "rating": { "type": "number" },
+        "comment": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "occasion": { "type": "string", "maxLength": 100 },
+        "date": { "type": "string", "maxLength": 40 },
+        "isApproved": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "authorUid", "name", "rating", "comment", "occasion", "date", "isApproved", "createdAt", "updatedAt"]
+    },
+    "SpecialOrder": {
+      "title": "SpecialOrder",
+      "description": "Custom celebration cake inquiry containing private customer contact PII",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "customerName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "phone": { "type": "string", "minLength": 3, "maxLength": 40 },
+        "email": { "type": "string", "maxLength": 200 },
+        "occasion": { "type": "string", "maxLength": 100 },
+        "preferredDate": { "type": "string", "maxLength": 40 },
+        "servingSize": { "type": "string", "maxLength": 100 },
+        "message": { "type": "string", "maxLength": 2000 },
+        "specialRequirements": { "type": "string", "maxLength": 1000 },
+        "referenceImage": { "type": "string", "maxLength": 900000 },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "customerName", "phone", "occasion", "preferredDate", "servingSize", "message", "status", "createdAt", "updatedAt"]
+    },
+    "ProductRating": {
+      "title": "ProductRating",
+      "description": "Individual verified star rating linked atomically to a product",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_-]+$" },
+        "productId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_-]+$" },
+        "authorUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "rating": { "type": "number" },
+        "customerName": { "type": "string", "maxLength": 120 },
+        "comment": { "type": "string", "maxLength": 1000 },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "productId", "authorUid", "rating", "customerName", "isPublic", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Role-based access control list for verified bakery administrators"
+    },
+    "/siteConfig/settings": {
+      "schema": { "$ref": "#/entities/SiteSettingsDoc" },
+      "description": "Singleton document storing bakery settings and SEO configuration"
+    },
+    "/siteConfig/homepage": {
+      "schema": { "$ref": "#/entities/HomepageDoc" },
+      "description": "Singleton document storing homepage hero and story sections"
+    },
+    "/siteConfig/about": {
+      "schema": { "$ref": "#/entities/AboutDoc" },
+      "description": "Singleton document storing bakery heritage, chefs, and milestones"
+    },
+    "/siteConfig/storeDirections": {
+      "schema": { "$ref": "#/entities/StoreDirectionsDoc" },
+      "description": "Singleton document storing store address, map embed, and parking instructions"
+    },
+    "/siteConfig/businessHours": {
+      "schema": { "$ref": "#/entities/BusinessHoursDoc" },
+      "description": "Singleton document storing daily business hours"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Artisanal bakery products catalog"
+    },
+    "/gallery/{galleryId}": {
+      "schema": { "$ref": "#/entities/GalleryItem" },
+      "description": "Showcase photography gallery"
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": { "$ref": "#/entities/Testimonial" },
+      "description": "Customer testimonials and reviews"
+    },
+    "/specialOrders/{orderId}": {
+      "schema": { "$ref": "#/entities/SpecialOrder" },
+      "description": "Custom celebration cake order inquiries with isolated PII"
+    },
+    "/productRatings/{ratingId}": {
+      "schema": { "$ref": "#/entities/ProductRating" },
+      "description": "Customer ratings associated with catalog products"
+    }
+  }
+}

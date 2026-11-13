@@ -1,0 +1,478 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Primitive Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'artentdesign@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() ||
+        (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // 3. Entity Validation Blueprints (Anti-Update-Gap & Strict Schema Keys)
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'role', 'createdAt', 'updatedAt']) &&
+        isValidId(data.uid) &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 200 &&
+        data.role == 'admin' &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSiteSettings(data) {
+      return data.keys().hasAll([
+          'siteName', 'tagline', 'phone', 'email', 'address',
+          'pickupNotice', 'showPickupBanner', 'maintenanceMode',
+          'visitCount', 'isPublic', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'siteName', 'tagline', 'logoUrl', 'faviconUrl', 'phone', 'email',
+          'address', 'googleMapsUrl', 'instagramUrl', 'facebookUrl', 'pinterestUrl',
+          'seoTitle', 'seoDescription', 'seoKeywords', 'pickupNotice',
+          'showPickupBanner', 'maintenanceMode', 'visitCount', 'isPublic', 'updatedAt'
+        ]) &&
+        data.siteName is string && data.siteName.size() >= 1 && data.siteName.size() <= 120 &&
+        data.tagline is string && data.tagline.size() <= 300 &&
+        (!('logoUrl' in data) || (data.logoUrl is string && data.logoUrl.size() <= 900000)) &&
+        (!('faviconUrl' in data) || (data.faviconUrl is string && data.faviconUrl.size() <= 900000)) &&
+        data.phone is string && data.phone.size() <= 40 &&
+        data.email is string && data.email.size() <= 200 &&
+        data.address is string && data.address.size() <= 400 &&
+        (!('googleMapsUrl' in data) || (data.googleMapsUrl is string && data.googleMapsUrl.size() <= 1000)) &&
+        (!('instagramUrl' in data) || (data.instagramUrl is string && data.instagramUrl.size() <= 500)) &&
+        (!('facebookUrl' in data) || (data.facebookUrl is string && data.facebookUrl.size() <= 500)) &&
+        (!('pinterestUrl' in data) || (data.pinterestUrl is string && data.pinterestUrl.size() <= 500)) &&
+        (!('seoTitle' in data) || (data.seoTitle is string && data.seoTitle.size() <= 200)) &&
+        (!('seoDescription' in data) || (data.seoDescription is string && data.seoDescription.size() <= 500)) &&
+        (!('seoKeywords' in data) || (data.seoKeywords is string && data.seoKeywords.size() <= 500)) &&
+        data.pickupNotice is string && data.pickupNotice.size() <= 500 &&
+        data.showPickupBanner is bool &&
+        data.maintenanceMode is bool &&
+        data.visitCount is number && data.visitCount >= 0 &&
+        data.isPublic == true &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidHomepage(data) {
+      return data.keys().hasAll([
+          'heroImage', 'heroTitle', 'tagline', 'welcomeTitle',
+          'welcomeStory', 'isPublic', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'heroImage', 'heroTitle', 'tagline', 'welcomeTitle', 'welcomeSubtitle',
+          'welcomeStory', 'ctaText1', 'ctaText2', 'featuredSectionTitle',
+          'pickupNotice', 'isPublic', 'updatedAt'
+        ]) &&
+        data.heroImage is string && data.heroImage.size() <= 900000 &&
+        data.heroTitle is string && data.heroTitle.size() <= 200 &&
+        data.tagline is string && data.tagline.size() <= 300 &&
+        data.welcomeTitle is string && data.welcomeTitle.size() <= 200 &&
+        (!('welcomeSubtitle' in data) || (data.welcomeSubtitle is string && data.welcomeSubtitle.size() <= 300)) &&
+        data.welcomeStory is string && data.welcomeStory.size() <= 2000 &&
+        (!('ctaText1' in data) || (data.ctaText1 is string && data.ctaText1.size() <= 100)) &&
+        (!('ctaText2' in data) || (data.ctaText2 is string && data.ctaText2.size() <= 100)) &&
+        (!('featuredSectionTitle' in data) || (data.featuredSectionTitle is string && data.featuredSectionTitle.size() <= 200)) &&
+        (!('pickupNotice' in data) || (data.pickupNotice is string && data.pickupNotice.size() <= 500)) &&
+        data.isPublic == true &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAbout(data) {
+      return data.keys().hasAll([
+          'storyTitle', 'storyParagraphs', 'mission', 'vision',
+          'bakers', 'timeline', 'qualityPromises', 'isPublic', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'storyTitle', 'storyParagraphs', 'mission', 'vision',
+          'bakers', 'timeline', 'qualityPromises', 'isPublic', 'updatedAt'
+        ]) &&
+        data.storyTitle is string && data.storyTitle.size() <= 200 &&
+        data.storyParagraphs is list && data.storyParagraphs.size() <= 15 &&
+        (data.storyParagraphs.size() == 0 || (data.storyParagraphs[0] is string && data.storyParagraphs[0].size() <= 2000)) &&
+        data.mission is string && data.mission.size() <= 1000 &&
+        data.vision is string && data.vision.size() <= 1000 &&
+        data.bakers is list && data.bakers.size() <= 20 &&
+        (data.bakers.size() == 0 || data.bakers[0] is map) &&
+        data.timeline is list && data.timeline.size() <= 25 &&
+        (data.timeline.size() == 0 || data.timeline[0] is map) &&
+        data.qualityPromises is list && data.qualityPromises.size() <= 20 &&
+        (data.qualityPromises.size() == 0 || (data.qualityPromises[0] is string && data.qualityPromises[0].size() <= 300)) &&
+        data.isPublic == true &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidStoreDirections(data) {
+      return data.keys().hasAll([
+          'address', 'landmark', 'googleMapsUrl', 'mapEmbedUrl',
+          'transportGuide', 'isPublic', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'address', 'landmark', 'googleMapsUrl', 'mapEmbedUrl',
+          'transportGuide', 'isPublic', 'updatedAt'
+        ]) &&
+        data.address is string && data.address.size() <= 500 &&
+        data.landmark is string && data.landmark.size() <= 300 &&
+        data.googleMapsUrl is string && data.googleMapsUrl.size() <= 1000 &&
+        data.mapEmbedUrl is string && data.mapEmbedUrl.size() <= 1000 &&
+        data.transportGuide is string && data.transportGuide.size() <= 1500 &&
+        data.isPublic == true &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidBusinessHours(data) {
+      return data.keys().hasAll(['hours', 'isPublic', 'updatedAt']) &&
+        data.keys().hasOnly(['hours', 'isPublic', 'updatedAt']) &&
+        data.hours is list && data.hours.size() <= 14 &&
+        (data.hours.size() == 0 || data.hours[0] is map) &&
+        data.isPublic == true &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll([
+          'id', 'name', 'category', 'price', 'rateUnit', 'rating', 'ratingCount',
+          'description', 'image', 'availabilityBadge', 'isFeatured', 'isHidden',
+          'ingredients', 'allergens', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'name', 'category', 'price', 'rateUnit', 'rating', 'ratingCount',
+          'description', 'image', 'availabilityBadge', 'isFeatured', 'isHidden',
+          'ingredients', 'allergens', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 160 &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+        data.price is number && data.price >= 0 &&
+        data.rateUnit is string && data.rateUnit.size() <= 60 &&
+        data.rating is number && data.rating >= 0 && data.rating <= 5 &&
+        data.ratingCount is number && data.ratingCount >= 0 &&
+        data.description is string && data.description.size() <= 2000 &&
+        data.image is string && data.image.size() <= 900000 &&
+        data.availabilityBadge is string && data.availabilityBadge.size() <= 60 &&
+        data.isFeatured is bool &&
+        data.isHidden is bool &&
+        data.ingredients is list && data.ingredients.size() <= 30 &&
+        (data.ingredients.size() == 0 || (data.ingredients[0] is string && data.ingredients[0].size() <= 120)) &&
+        data.allergens is list && data.allergens.size() <= 20 &&
+        (data.allergens.size() == 0 || (data.allergens[0] is string && data.allergens[0].size() <= 120)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidGalleryItem(data) {
+      return data.keys().hasAll([
+          'id', 'title', 'category', 'imageUrl', 'isPublic', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'title', 'category', 'imageUrl', 'description',
+          'uploadDate', 'isPublic', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+        data.imageUrl is string && data.imageUrl.size() <= 900000 &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+        (!('uploadDate' in data) || (data.uploadDate is string && data.uploadDate.size() <= 40)) &&
+        data.isPublic == true &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidTestimonial(data) {
+      return data.keys().hasAll([
+          'id', 'authorUid', 'name', 'rating', 'comment',
+          'occasion', 'date', 'isApproved', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'authorUid', 'name', 'rating', 'comment',
+          'occasion', 'date', 'isApproved', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.authorUid is string && data.authorUid.size() >= 1 && data.authorUid.size() <= 128 &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+        data.comment is string && data.comment.size() >= 1 && data.comment.size() <= 2000 &&
+        data.occasion is string && data.occasion.size() <= 100 &&
+        data.date is string && data.date.size() <= 40 &&
+        data.isApproved is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSpecialOrder(data) {
+      return data.keys().hasAll([
+          'id', 'userId', 'customerName', 'phone', 'occasion',
+          'preferredDate', 'servingSize', 'message', 'status',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'userId', 'customerName', 'phone', 'email', 'occasion',
+          'preferredDate', 'servingSize', 'message', 'specialRequirements',
+          'referenceImage', 'status', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+        data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 120 &&
+        data.phone is string && data.phone.size() >= 3 && data.phone.size() <= 40 &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 200)) &&
+        data.occasion is string && data.occasion.size() <= 100 &&
+        data.preferredDate is string && data.preferredDate.size() <= 40 &&
+        data.servingSize is string && data.servingSize.size() <= 100 &&
+        data.message is string && data.message.size() <= 2000 &&
+        (!('specialRequirements' in data) || (data.specialRequirements is string && data.specialRequirements.size() <= 1000)) &&
+        (!('referenceImage' in data) || (data.referenceImage is string && data.referenceImage.size() <= 900000)) &&
+        data.status in ['pending', 'confirmed', 'completed', 'cancelled'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidProductRating(data) {
+      return data.keys().hasAll([
+          'id', 'productId', 'authorUid', 'rating', 'customerName',
+          'isPublic', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'productId', 'authorUid', 'rating', 'customerName',
+          'comment', 'isPublic', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.productId) &&
+        data.authorUid is string && data.authorUid.size() >= 1 && data.authorUid.size() <= 128 &&
+        data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+        data.customerName is string && data.customerName.size() <= 120 &&
+        (!('comment' in data) || (data.comment is string && data.comment.size() <= 1000)) &&
+        data.isPublic == true &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // 4. Connection Health Check Document
+    match /test/connection {
+      allow get: if resource == null || resource.id == 'connection';
+      allow list, write: if false;
+    }
+
+    // 5. Administrators Collection (Zero self-escalation)
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && isVerifiedUser() &&
+        (request.auth.uid == adminUid || isAdmin());
+      allow list: if isBootstrappedAdmin() && resource.data.role == 'admin';
+      allow create: if isValidId(adminUid) && isBootstrappedAdmin() &&
+        isValidAdminUser(incoming()) &&
+        incoming().uid == adminUid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(adminUid) && isBootstrappedAdmin() &&
+        isValidAdminUser(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['email', 'role', 'updatedAt']);
+      allow delete: if isValidId(adminUid) && isBootstrappedAdmin();
+    }
+
+    // 6. Site Configuration Singletons
+    match /siteConfig/settings {
+      allow get: if resource == null || resource.data.isPublic == true || isAdmin();
+      allow list: if false;
+      allow create, update: if isAdmin() &&
+        isValidSiteSettings(incoming()) &&
+        incoming().updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    match /siteConfig/homepage {
+      allow get: if resource == null || resource.data.isPublic == true || isAdmin();
+      allow list: if false;
+      allow create, update: if isAdmin() &&
+        isValidHomepage(incoming()) &&
+        incoming().updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    match /siteConfig/about {
+      allow get: if resource == null || resource.data.isPublic == true || isAdmin();
+      allow list: if false;
+      allow create, update: if isAdmin() &&
+        isValidAbout(incoming()) &&
+        incoming().updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    match /siteConfig/storeDirections {
+      allow get: if resource == null || resource.data.isPublic == true || isAdmin();
+      allow list: if false;
+      allow create, update: if isAdmin() &&
+        isValidStoreDirections(incoming()) &&
+        incoming().updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    match /siteConfig/businessHours {
+      allow get: if resource == null || resource.data.isPublic == true || isAdmin();
+      allow list: if false;
+      allow create, update: if isAdmin() &&
+        isValidBusinessHours(incoming()) &&
+        incoming().updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    // 7. Catalog Products
+    match /products/{productId} {
+      allow get: if isValidId(productId) &&
+        (resource == null || resource.data.isHidden == false || isAdmin());
+      allow list: if resource.data.isHidden == false || isBootstrappedAdmin();
+      allow create: if isValidId(productId) && isAdmin() &&
+        isValidProduct(incoming()) &&
+        incoming().id == productId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(productId) && isVerifiedUser() &&
+        isValidProduct(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'category', 'price', 'rateUnit', 'rating', 'ratingCount',
+            'description', 'image', 'availabilityBadge', 'isFeatured', 'isHidden',
+            'ingredients', 'allergens', 'updatedAt'
+          ])) ||
+          (incoming().diff(existing()).affectedKeys().hasOnly(['rating', 'ratingCount', 'updatedAt']) &&
+            incoming().ratingCount == existing().ratingCount + 1)
+        );
+      allow delete: if isValidId(productId) && isAdmin();
+    }
+
+    // 8. Gallery Showcase
+    match /gallery/{galleryId} {
+      allow get: if isValidId(galleryId) &&
+        (resource == null || resource.data.isPublic == true || isAdmin());
+      allow list: if resource.data.isPublic == true || isBootstrappedAdmin();
+      allow create: if isValidId(galleryId) && isAdmin() &&
+        isValidGalleryItem(incoming()) &&
+        incoming().id == galleryId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(galleryId) && isAdmin() &&
+        isValidGalleryItem(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'category', 'imageUrl', 'description', 'uploadDate', 'isPublic', 'updatedAt'
+        ]);
+      allow delete: if isValidId(galleryId) && isAdmin();
+    }
+
+    // 9. Customer Testimonials
+    match /testimonials/{testimonialId} {
+      allow get: if isValidId(testimonialId) &&
+        (resource == null || resource.data.isApproved == true || isAdmin() ||
+          (isVerifiedUser() && resource.data.authorUid == request.auth.uid));
+      allow list: if resource.data.isApproved == true || isBootstrappedAdmin() ||
+        (isVerifiedUser() && resource.data.authorUid == request.auth.uid);
+      allow create: if isValidId(testimonialId) && isVerifiedUser() &&
+        isValidTestimonial(incoming()) &&
+        incoming().id == testimonialId &&
+        incoming().authorUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (isAdmin() || incoming().isApproved == true);
+      allow update: if isValidId(testimonialId) && isAdmin() &&
+        isValidTestimonial(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().authorUid == existing().authorUid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'rating', 'comment', 'occasion', 'date', 'isApproved', 'updatedAt'
+        ]);
+      allow delete: if isValidId(testimonialId) && isAdmin();
+    }
+
+    // 10. Special Order Inquiries (PII Protected + Terminal State Locked)
+    match /specialOrders/{orderId} {
+      allow get: if isValidId(orderId) && isVerifiedUser() &&
+        (isAdmin() || (resource != null && existing().userId == request.auth.uid));
+      allow list: if isBootstrappedAdmin() ||
+        (isVerifiedUser() && resource.data.userId == request.auth.uid);
+      allow create: if isValidId(orderId) && isVerifiedUser() &&
+        isValidSpecialOrder(incoming()) &&
+        incoming().id == orderId &&
+        incoming().userId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (isAdmin() || incoming().status == 'pending');
+      allow update: if isValidId(orderId) && isVerifiedUser() &&
+        isValidSpecialOrder(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'customerName', 'phone', 'email', 'occasion', 'preferredDate',
+            'servingSize', 'message', 'specialRequirements', 'referenceImage',
+            'status', 'updatedAt'
+          ])) ||
+          (existing().userId == request.auth.uid &&
+            !(existing().status in ['completed', 'cancelled']) &&
+            existing().status == 'pending' &&
+            incoming().status == 'cancelled' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+        );
+      allow delete: if isValidId(orderId) && isAdmin();
+    }
+
+    // 11. Product Ratings (Atomic Batch Sync Required)
+    match /productRatings/{ratingId} {
+      allow get: if isValidId(ratingId) &&
+        (resource == null || resource.data.isPublic == true || isAdmin());
+      allow list: if resource.data.isPublic == true || isBootstrappedAdmin();
+      allow create: if isValidId(ratingId) && isVerifiedUser() &&
+        isValidProductRating(incoming()) &&
+        incoming().id == ratingId &&
+        incoming().authorUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          (isAdmin() && existsAfter(/databases/$(database)/documents/products/$(incoming().productId))) ||
+          (exists(/databases/$(database)/documents/products/$(incoming().productId)) &&
+            getAfter(/databases/$(database)/documents/products/$(incoming().productId)).data.ratingCount ==
+            get(/databases/$(database)/documents/products/$(incoming().productId)).data.ratingCount + 1)
+        );
+      allow update: if false;
+      allow delete: if isValidId(ratingId) && isAdmin();
+    }
+  }
+}

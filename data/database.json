@@ -1,0 +1,182 @@
+{
+  "settings": {
+    "siteName": "Liya's Bake",
+    "tagline": "Freshly Baked Happiness Every Day.",
+    "logoUrl": "/logo.jpg",
+    "faviconUrl": "/logo.jpg",
+    "phone": "+91 8431126242",
+    "email": "hello@liyasbake.com",
+    "address": "jolly mohalla masjid road pvr road bengaluru karnataka 560053",
+    "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=jolly+mohalla+masjid+road+pvr+road+bengaluru+karnataka+560053",
+    "instagramUrl": "https://instagram.com",
+    "facebookUrl": "https://facebook.com",
+    "pinterestUrl": "https://pinterest.com",
+    "seoTitle": "Liya's Bake | Luxury Artisanal Bakery & Custom Cakes",
+    "seoDescription": "Freshly Baked Happiness Every Day. Explore artisanal cakes, delicate pastries, cookies, and custom special orders at Liya's Bake.",
+    "seoKeywords": "bakery, artisanal cakes, croissants, bengaluru, custom celebration cakes, sourdough",
+    "pickupNotice": "THE FOOD WILL NOT GET TO YOUR HOME IT SHOULD COME AND COLLECT FROM GIVEN ADDRESS",
+    "showPickupBanner": false,
+    "maintenanceMode": false,
+    "visitCount": 1840
+  },
+  "homepage": {
+    "heroImage": "/images/hero-bakery.jpg",
+    "heroTitle": "Liya's Bake",
+    "tagline": "Freshly Baked Happiness Every Day",
+    "welcomeTitle": "Artisanal Craftsmanship & Pure Passion",
+    "welcomeSubtitle": "Where Every Creation Tells A Celebration Story",
+    "welcomeStory": "Founded in the heart of the culinary district, Liya's Bake brings timeless Parisian pastry techniques together with modern flavor palettes. We handcraft every batch using 100% organic French butter, Madagascar bourbon vanilla, and locally harvested berries.",
+    "ctaText1": "View Products",
+    "ctaText2": "Special Order Inquiry",
+    "featuredSectionTitle": "Our Signature Creations",
+    "pickupNotice": "THE FOOD WILL NOT GET TO YOUR HOME IT SHOULD COME AND COLLECT FROM GIVEN ADDRESS"
+  },
+  "about": {
+    "storyTitle": "Our Journey & Philosophy",
+    "storyParagraphs": [
+      "At Liya's Bake, we believe that baking is a harmony of chemistry and soul. We never compromise on ingredients — using single-origin Valrhona chocolate, farm-fresh pasture eggs, and slow-fermented starters.",
+      "Every morning before dawn, our bakers hand-laminate flaky viennoiserie doughs and simmer silky curds. By opening time, our counter is overflowing with crisp viennoiserie, golden brioche, and bespoke celebration cakes.",
+      "Rooted in warm Bengaluru hospitality, our boutique bakery on Masjid Road Chickpet serves as a gathering place for lovers of genuine craftsmanship and unhurried patisserie art."
+    ],
+    "mission": "To elevate life's everyday and monumental moments through extraordinary, handcrafted baked delights.",
+    "vision": "To be recognized globally as a benchmark of artisanal bakery excellence and sustainable luxury patisserie.",
+    "bakers": [
+      {
+        "id": "baker-1",
+        "name": "Liya Vance",
+        "role": "Founder & Executive Pastry Chef",
+        "bio": "Trained in classic Parisian patisserie with over 12 years creating showstopping architectural wedding tiers.",
+        "image": "/images/baker-1.jpg"
+      },
+      {
+        "id": "baker-2",
+        "name": "Marcelle Dubois",
+        "role": "Master Viennoisier",
+        "bio": "Specialist in 72-hour cultured butter lamination, sourdough fermentation, and traditional French baguettes.",
+        "image": "/images/baker-2.jpg"
+      },
+      {
+        "id": "baker-3",
+        "name": "Elena Rostova",
+        "role": "Cake Designer & Sugar Artist",
+        "bio": "Celebrated for hand-sculpted sugar florals, gold-leaf marbling, and bespoke custom celebratory centerpieces.",
+        "image": "/images/baker-3.jpg"
+      }
+    ],
+    "qualityPromises": [
+      "100% Organic Normandy Butter",
+      "Madagascar Bourbon Vanilla",
+      "72-Hour Slow Fermentation",
+      "Zero Preservatives or Additives"
+    ],
+    "timeline": [
+      {
+        "year": "2018",
+        "title": "The Humble Hearth",
+        "description": "Started as a bespoke micro-bakery oven crafting personalized birthday tiers for local neighbors."
+      },
+      {
+        "year": "2020",
+        "title": "Mastering French Techniques",
+        "description": "Expanded recipe catalog to include slow-fermented sourdoughs and laminated French croissants."
+      },
+      {
+        "year": "2023",
+        "title": "Boutique Bakery Counter",
+        "description": "Opened our flagship storefront at Jolly Mohalla, Masjid Road Chickpet in Bengaluru."
+      },
+      {
+        "year": "2026",
+        "title": "Artisanal Destination",
+        "description": "Cherished by patrons across the city for unforgettable custom cake creations and morning viennoiserie."
+      }
+    ]
+  },
+  "products": [],
+  "gallery": [],
+  "testimonials": [],
+  "businessHours": [
+    {
+      "day": "Monday",
+      "openTime": "07:00 AM",
+      "closeTime": "08:00 PM",
+      "isClosed": false
+    },
+    {
+      "day": "Tuesday",
+      "openTime": "07:00 AM",
+      "closeTime": "08:00 PM",
+      "isClosed": false
+    },
+    {
+      "day": "Wednesday",
+      "openTime": "07:00 AM",
+      "closeTime": "08:00 PM",
+      "isClosed": false
+    },
+    {
+      "day": "Thursday",
+      "openTime": "07:00 AM",
+      "closeTime": "08:00 PM",
+      "isClosed": false
+    },
+    {
+      "day": "Friday",
+      "openTime": "07:00 AM",
+      "closeTime": "09:00 PM",
+      "isClosed": false
+    },
+    {
+      "day": "Saturday",
+      "openTime": "07:00 AM",
+      "closeTime": "09:00 PM",
+      "isClosed": false
+    },
+    {
+      "day": "Sunday",
+      "openTime": "07:00 AM",
+      "closeTime": "08:00 PM",
+      "isClosed": false
+    }
+  ],
+  "specialOrders": [],
+  "storeDirections": {
+    "address": "jolly mohalla masjid road pvr road bengaluru karnataka 560053",
+    "landmark": "Near Jolly Mohalla Masjid & PVR Road Crossing, Chickpet, Bengaluru",
+    "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=jolly+mohalla+masjid+road+pvr+road+bengaluru+karnataka+560053",
+    "mapEmbedUrl": "https://maps.google.com/maps?q=jolly%20mohalla%20masjid%20road%20pvr%20road%20bengaluru%20karnataka%20560053&t=&z=15&ie=UTF8&iwloc=&output=embed",
+    "transportGuide": "Located near Chickpet/K.R. Market metro stations. Ample two-wheeler parking in front of the counter. For four-wheelers, paid public parking is available 200m away on PVR Road."
+  },
+  "productRatings": [
+    {
+      "id": "rate-1",
+      "productId": "prod-1",
+      "rating": 5,
+      "customerName": "Priya Sharma",
+      "comment": "Best Rosé Velvet cake in Bengaluru! Incredibly moist.",
+      "createdAt": "2026-09-03T11:00:29.939Z"
+    },
+    {
+      "id": "rate-2",
+      "productId": "prod-2",
+      "rating": 5,
+      "customerName": "Anand Kumar",
+      "comment": "The 24k gold leaf wedding tier stole the show at our reception.",
+      "createdAt": "2026-08-30T11:00:29.939Z"
+    },
+    {
+      "id": "rate-3",
+      "productId": "prod-3",
+      "rating": 5,
+      "customerName": "Fatima Z.",
+      "comment": "Flaky and buttery perfection every morning.",
+      "createdAt": "2026-09-04T11:00:29.939Z"
+    }
+  ],
+  "adminAuth": {
+    "username": "admin",
+    "passwordHash": "a4e8e6f95a452eb9b443adc30c8fa560ba4a7487bbaee8182e079c81c8c76db6",
+    "isFirstLogin": false
+  },
+  "lastUpdated": "2026-11-13T02:53:19.883Z"
+}

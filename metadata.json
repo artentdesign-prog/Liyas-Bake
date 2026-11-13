@@ -1,0 +1,6 @@
+{
+  "name": "Liya's Bake",
+  "description": "Freshly Baked Happiness Every Day. Explore artisanal cakes, delicate pastries, cookies, and custom special orders at Liya's Bake.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

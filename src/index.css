@@ -1,0 +1,83 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --color-cream-50: #fdf8f5;
+  --color-cream-100: #f7efe9;
+  --color-cream-200: #ece0d6;
+  --color-cream-300: #d8c6a5;
+
+  --color-chocolate-200: #cca084;
+  --color-chocolate-600: #6b3d23;
+  --color-chocolate-700: #4e2a16;
+  --color-chocolate-800: #3e2723;
+  --color-chocolate-900: #261512;
+  --color-chocolate-950: #180c09;
+
+  --color-gold-300: #f3dc87;
+  --color-gold-400: #e7c855;
+  --color-gold-500: #d4af37;
+  --color-gold-600: #b8860b;
+  --color-gold-700: #8c630d;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.gold-gradient-text {
+  -webkit-text-fill-color: transparent;
+  background: linear-gradient(135deg, #3e2723, #b8860b, #d4af37);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.dark .gold-gradient-text {
+  -webkit-text-fill-color: transparent;
+  background: linear-gradient(135deg, #fdf8f5, #e7c855, #d4af37);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.gold-border-glow {
+  box-shadow: 0 0 25px -5px #d4af3740;
+}
+
+.mesh-glow-gold {
+  filter: blur(100px);
+  opacity: 0.25;
+  pointer-events: none;
+  background-color: #d4af37;
+  border-radius: 9999px;
+  width: 24rem;
+  height: 24rem;
+  position: absolute;
+}
+
+.dark .mesh-glow-gold {
+  opacity: 0.2;
+  background-color: #8c630d;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
