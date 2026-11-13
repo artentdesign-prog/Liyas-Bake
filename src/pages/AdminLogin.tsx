@@ -15,7 +15,7 @@ import { useData } from '../context/DataContext';
 
 export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
-  const { login, updateAdminInfo, signInWithGoogle } = useAuth();
+  const { login, updateAdminInfo } = useAuth();
   const { siteData } = useData();
   const logoUrl = siteData.settings.logoUrl || '/logo.jpg';
 
@@ -28,26 +28,6 @@ export const AdminLogin: React.FC = () => {
   const [needsPasswordSetup, setNeedsPasswordSetup] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
-  const handleGoogleLogin = async () => {
-    setErrorMsg(null);
-    setLoading(true);
-    try {
-      const res = await signInWithGoogle(true);
-      if (res.success && res.isAdmin) {
-        setSuccessMsg('Firebase Admin verified! Redirecting to Dashboard...');
-        setTimeout(() => {
-          navigate('/admin/dashboard');
-        }, 800);
-      } else {
-        setErrorMsg(res.error || 'Unauthorized Google account.');
-      }
-    } catch {
-      setErrorMsg('Failed to sign in with Google.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -250,8 +230,7 @@ export const AdminLogin: React.FC = () => {
             </button>
           </form>
         ) : (
-          <div className="space-y-4">
-            <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-chocolate-900 dark:text-cream-200 mb-1">
                   Username
@@ -307,24 +286,6 @@ export const AdminLogin: React.FC = () => {
                 <span>{loading ? 'Authenticating...' : 'Login to Dashboard'}</span>
               </button>
             </form>
-
-            <div className="relative flex items-center py-1">
-              <div className="flex-grow border-t border-gold-500/20" />
-              <span className="px-3 text-[10px] uppercase tracking-wider font-semibold text-chocolate-600 dark:text-cream-300">
-                Or Firebase Cloud Auth
-              </span>
-              <div className="flex-grow border-t border-gold-500/20" />
-            </div>
-
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className="w-full py-2.5 px-4 rounded-xl bg-white dark:bg-chocolate-800 border border-gold-500/40 text-chocolate-900 dark:text-cream-100 text-xs font-bold shadow-sm hover:bg-cream-50 dark:hover:bg-chocolate-700 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              <span>Sign In with Google (Firebase Firestore)</span>
-            </button>
-          </div>
         )}
 
         <div className="text-center pt-2">
