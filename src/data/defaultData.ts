@@ -1,4 +1,4 @@
-import { SiteData } from '../types';
+import type { SiteData } from '../types.ts';
 
 export const PRESET_BAKERY_IMAGES = [
   { name: 'Rosé Cake', url: '/images/rose-velvet.jpg' },

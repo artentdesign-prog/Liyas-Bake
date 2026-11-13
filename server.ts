@@ -241,8 +241,8 @@ async function startServer() {
     }
 
     const prod = db.products[idx];
-    const currentCount = prod.ratingCount || 1;
-    const currentRating = prod.rating || 5;
+    const currentCount = typeof prod.ratingCount === 'number' ? prod.ratingCount : 1;
+    const currentRating = typeof prod.rating === 'number' ? prod.rating : 5;
     const nextCount = currentCount + 1;
     const nextRating = Number(
       ((currentRating * currentCount + ratingVal) / nextCount).toFixed(1)
@@ -334,7 +334,7 @@ async function startServer() {
         totalGallery: db.gallery.length,
         totalTestimonials: db.testimonials.length,
         pendingOrders: orders.filter(
-          (o) => o.status.toLowerCase() === 'pending'
+          (o) => (o.status || 'pending').toLowerCase() === 'pending'
         ).length,
         totalOrders: orders.length,
         visitCount: db.settings.visitCount || 1840,
@@ -453,9 +453,14 @@ async function startServer() {
   app.patch('/api/admin/special-orders/:id/status', requireAuth, (req, res) => {
     const db = ensureDatabase();
     const { id } = req.params;
-    const { status } = req.body || {};
+    const rawStatus = req.body?.status;
+    const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+    const normalizedStatus =
+      typeof rawStatus === 'string' && validStatuses.includes(rawStatus)
+        ? rawStatus
+        : undefined;
     db.specialOrders = db.specialOrders.map((o) =>
-      o.id === id ? { ...o, status: status || o.status } : o
+      o.id === id ? { ...o, status: normalizedStatus || o.status || 'pending' } : o
     );
     saveDatabase(db);
     res.json({ success: true });

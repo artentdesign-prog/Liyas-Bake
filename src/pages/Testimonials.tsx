@@ -91,7 +91,9 @@ export const Testimonials: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1 text-gold-500">
-                  {Array.from({ length: t.rating }).map((_, idx) => (
+                  {Array.from({
+                    length: Math.max(0, Math.min(5, Math.round(Number(t.rating) || 5))),
+                  }).map((_, idx) => (
                     <Star
                       key={idx}
                       className="w-4 h-4 fill-gold-500 text-gold-500"

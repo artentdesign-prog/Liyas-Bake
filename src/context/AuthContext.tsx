@@ -33,6 +33,7 @@ interface AuthContextValue {
   firebaseUser: FirebaseUser | null;
   authReady: boolean;
   isFirebaseAdmin: boolean;
+  isBootstrappedAdmin: boolean;
   login: (token: string, user: AdminUser) => void;
   logout: () => void;
   updateAdminInfo: (user: AdminUser) => void;
@@ -62,17 +63,21 @@ async function checkFirebaseAdminRole(fbUser: FirebaseUser | null): Promise<bool
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem('liyas_admin_token')
-  );
+  const [token, setToken] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('liyas_admin_token');
+    } catch {
+      return null;
+    }
+  });
   const [adminUser, setAdminUser] = useState<AdminUser | null>(() => {
-    const saved = localStorage.getItem('liyas_admin_user');
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem('liyas_admin_user');
+      if (saved) {
         return JSON.parse(saved);
-      } catch {
-        return { username: 'admin' };
       }
+    } catch {
+      return { username: 'admin' };
     }
     return token ? { username: 'admin' } : null;
   });
@@ -80,11 +85,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [isFirebaseAdmin, setIsFirebaseAdmin] = useState(false);
+  const [isBootstrappedAdmin, setIsBootstrappedAdmin] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
-      const adminRole = await checkFirebaseAdminRole(fbUser);
+      const bootstrapped = Boolean(
+        fbUser &&
+          fbUser.emailVerified &&
+          fbUser.email?.toLowerCase() === BOOTSTRAPPED_ADMIN_EMAIL.toLowerCase()
+      );
+      setIsBootstrappedAdmin(bootstrapped);
+      const adminRole = bootstrapped || (await checkFirebaseAdminRole(fbUser));
       setIsFirebaseAdmin(adminRole);
       setAuthReady(true);
     });
@@ -92,25 +104,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    if (token) {
-      localStorage.setItem('liyas_admin_token', token);
-    } else {
-      localStorage.removeItem('liyas_admin_token');
+    try {
+      if (token) {
+        localStorage.setItem('liyas_admin_token', token);
+      } else {
+        localStorage.removeItem('liyas_admin_token');
+      }
+    } catch {
+      // ignore storage errors
     }
   }, [token]);
 
   const login = useCallback((newToken: string, user: AdminUser) => {
     setToken(newToken);
     setAdminUser(user);
-    localStorage.setItem('liyas_admin_token', newToken);
-    localStorage.setItem('liyas_admin_user', JSON.stringify(user));
+    try {
+      localStorage.setItem('liyas_admin_token', newToken);
+      localStorage.setItem('liyas_admin_user', JSON.stringify(user));
+    } catch {
+      // ignore storage errors
+    }
   }, []);
 
   const logout = useCallback(() => {
     setToken(null);
     setAdminUser(null);
-    localStorage.removeItem('liyas_admin_token');
-    localStorage.removeItem('liyas_admin_user');
+    try {
+      localStorage.removeItem('liyas_admin_token');
+      localStorage.removeItem('liyas_admin_user');
+    } catch {
+      // ignore storage errors
+    }
     if (auth.currentUser) {
       signOut(auth).catch(() => {});
     }
@@ -118,7 +142,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateAdminInfo = useCallback((user: AdminUser) => {
     setAdminUser(user);
-    localStorage.setItem('liyas_admin_user', JSON.stringify(user));
+    try {
+      localStorage.setItem('liyas_admin_user', JSON.stringify(user));
+    } catch {
+      // ignore storage errors
+    }
   }, []);
 
   const signInWithGoogle = useCallback(
@@ -128,8 +156,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const cred = await signInWithPopup(auth, googleProvider);
         const fbUser = cred.user;
-        const adminRole = await checkFirebaseAdminRole(fbUser);
+        const bootstrapped = Boolean(
+          fbUser.emailVerified &&
+            fbUser.email?.toLowerCase() === BOOTSTRAPPED_ADMIN_EMAIL.toLowerCase()
+        );
+        const adminRole = bootstrapped || (await checkFirebaseAdminRole(fbUser));
         setFirebaseUser(fbUser);
+        setIsBootstrappedAdmin(bootstrapped);
         setIsFirebaseAdmin(adminRole);
 
         if (requireAdmin && !adminRole) {
@@ -159,6 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signOutFirebase = useCallback(async () => {
     await signOut(auth);
     setFirebaseUser(null);
+    setIsBootstrappedAdmin(false);
     setIsFirebaseAdmin(false);
   }, []);
 
@@ -173,6 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         firebaseUser,
         authReady,
         isFirebaseAdmin,
+        isBootstrappedAdmin,
         login,
         logout,
         updateAdminInfo,

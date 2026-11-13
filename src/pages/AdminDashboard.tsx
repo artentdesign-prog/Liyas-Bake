@@ -72,6 +72,7 @@ export const AdminDashboard: React.FC = () => {
     isAuthenticated,
     user,
     logout,
+    updateAdminInfo,
     firebaseUser,
     isFirebaseAdmin,
     signInWithGoogle,
@@ -120,6 +121,11 @@ export const AdminDashboard: React.FC = () => {
 
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [confirmResetType, setConfirmResetType] = useState<
+    'default' | 'compulsory' | null
+  >(null);
+  const [resetting, setResetting] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [addingProduct, setAddingProduct] = useState(false);
@@ -184,7 +190,7 @@ export const AdminDashboard: React.FC = () => {
   }, [siteData.settings, siteData.businessHours, siteData.storeDirections]);
 
   const pendingCount = siteData.specialOrders.filter(
-    (o) => o.status.toLowerCase() === 'pending'
+    (o) => (o.status || 'pending').toLowerCase() === 'pending'
   ).length;
 
   const filteredProducts = useMemo(() => {
@@ -204,7 +210,7 @@ export const AdminDashboard: React.FC = () => {
         o.occasion.toLowerCase().includes(q);
       const matchesStatus =
         inquiryFilter === 'All' ||
-        o.status.toLowerCase() === inquiryFilter.toLowerCase();
+        (o.status || 'pending').toLowerCase() === inquiryFilter.toLowerCase();
       return matchesText && matchesStatus;
     });
   }, [siteData.specialOrders, inquirySearch, inquiryFilter]);
@@ -257,9 +263,30 @@ export const AdminDashboard: React.FC = () => {
           showToast('All store data deleted' + cloudWarning);
           break;
       }
+    } catch {
+      showToast('Failed to delete item. Check Firebase permissions.');
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
+    }
+  };
+
+  const handleConfirmReset = async () => {
+    if (!confirmResetType) return;
+    setResetting(true);
+    try {
+      if (confirmResetType === 'default') {
+        await resetToDefault();
+        showToast('Reset to default data complete!');
+      } else {
+        await resetCompulsoryDatabase();
+        showToast('Compulsory database refreshed with fresh clean products!');
+      }
+    } catch {
+      showToast('Failed to reset database.');
+    } finally {
+      setResetting(false);
+      setConfirmResetType(null);
     }
   };
 
@@ -352,12 +379,16 @@ export const AdminDashboard: React.FC = () => {
             <button
               type="button"
               onClick={async () => {
-                const ok = await syncAllToFirestore();
-                showToast(
-                  ok
-                    ? 'All data synced to Firebase Firestore!'
-                    : 'Firestore sync skipped.'
-                );
+                try {
+                  const ok = await syncAllToFirestore();
+                  showToast(
+                    ok
+                      ? 'All data synced to Firebase Firestore!'
+                      : 'Firestore sync skipped.'
+                  );
+                } catch {
+                  showToast('Firestore sync failed. Check permissions.');
+                }
               }}
               className="px-4 py-2 rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-500 hover:text-white transition-colors cursor-pointer"
             >
@@ -544,15 +575,15 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                       <span
                         className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          o.status.toLowerCase() === 'pending'
+                          (o.status || 'pending').toLowerCase() === 'pending'
                             ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                            : o.status.toLowerCase() === 'completed' ||
-                              o.status.toLowerCase() === 'confirmed'
+                            : (o.status || '').toLowerCase() === 'completed' ||
+                              (o.status || '').toLowerCase() === 'confirmed'
                             ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
                             : 'bg-gray-200 text-gray-700'
                         }`}
                       >
-                        {o.status}
+                        {o.status || 'pending'}
                       </span>
                     </div>
                   ))}
@@ -739,7 +770,9 @@ export const AdminDashboard: React.FC = () => {
                       <div className="flex items-center gap-1 text-[11px] font-bold text-gold-600 dark:text-gold-400">
                         <Star className="w-3 h-3 fill-gold-400 text-gold-500" />
                         <span>
-                          {product.rating ? product.rating.toFixed(1) : '5.0'}
+                          {product.rating !== undefined && product.rating !== null
+                            ? Number(product.rating).toFixed(1)
+                            : '5.0'}
                         </span>
                         <span className="text-[9px] text-chocolate-600/80 dark:text-cream-300/80 font-normal">
                           ({product.ratingCount || 1})
@@ -1116,18 +1149,28 @@ export const AdminDashboard: React.FC = () => {
                         rating:
                           typeof productForm.rating === 'number'
                             ? productForm.rating
-                            : 5,
+                            : Number(productForm.rating) || 5,
                         ratingCount: productForm.ratingCount || 1,
+                        ingredients: (productForm.ingredients || [])
+                          .map((s) => s.trim())
+                          .filter(Boolean),
+                        allergens: (productForm.allergens || [])
+                          .map((s) => s.trim())
+                          .filter(Boolean),
                       };
-                      if (editingProduct) {
-                        await updateProduct(editingProduct.id, payload);
-                        showToast('Product updated in database!');
-                      } else {
-                        await addProduct(payload);
-                        showToast('Product created in database!');
+                      try {
+                        if (editingProduct) {
+                          await updateProduct(editingProduct.id, payload);
+                          showToast('Product updated in database!');
+                        } else {
+                          await addProduct(payload);
+                          showToast('Product created in database!');
+                        }
+                        setAddingProduct(false);
+                        setEditingProduct(null);
+                      } catch {
+                        showToast('Failed to save product. Check permissions.');
                       }
-                      setAddingProduct(false);
-                      setEditingProduct(null);
                     }}
                     className="px-5 py-2 rounded-xl bg-gold-500 text-chocolate-950 text-xs font-bold cursor-pointer hover:bg-gold-400 transition-colors"
                   >
@@ -1158,9 +1201,9 @@ export const AdminDashboard: React.FC = () => {
               >
                 <option value="All">All Statuses</option>
                 <option value="pending">Pending</option>
-                <option value="in-progress">In Progress</option>
+                <option value="confirmed">Confirmed</option>
                 <option value="completed">Completed</option>
-                <option value="rejected">Rejected</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
             <button
@@ -1204,16 +1247,21 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-3">
                       <select
-                        value={order.status.toLowerCase()}
-                        onChange={(e) =>
-                          updateInquiryStatus(order.id, e.target.value)
-                        }
+                        value={(order.status || 'pending').toLowerCase()}
+                        onChange={async (e) => {
+                          try {
+                            await updateInquiryStatus(order.id, e.target.value);
+                            showToast('Inquiry status updated!');
+                          } catch {
+                            showToast('Failed to update status.');
+                          }
+                        }}
                         className="px-3 py-1.5 rounded-xl text-xs font-bold bg-cream-100 dark:bg-chocolate-800 border border-gold-500/30"
                       >
                         <option value="pending">Pending</option>
-                        <option value="in-progress">In Progress</option>
+                        <option value="confirmed">Confirmed</option>
                         <option value="completed">Completed</option>
-                        <option value="rejected">Rejected</option>
+                        <option value="cancelled">Cancelled</option>
                       </select>
                       <button
                         type="button"
@@ -1274,15 +1322,14 @@ export const AdminDashboard: React.FC = () => {
                           referrerPolicy="no-referrer"
                         />
                       </div>
-                      <a
-                        href={order.referenceImage}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs font-bold text-gold-600 dark:text-gold-400 hover:underline flex items-center gap-1"
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImage(order.referenceImage || null)}
+                        className="text-xs font-bold text-gold-600 dark:text-gold-400 hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <span>View Full Reference Photo</span>
                         <ExternalLink className="w-3 h-3" />
-                      </a>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -1437,15 +1484,19 @@ export const AdminDashboard: React.FC = () => {
                         showToast('Image is required');
                         return;
                       }
-                      if (editingGallery) {
-                        await updateGalleryItem(editingGallery.id, galleryForm);
-                        showToast('Gallery image updated!');
-                      } else {
-                        await addGalleryItem(galleryForm);
-                        showToast('Gallery image added!');
+                      try {
+                        if (editingGallery) {
+                          await updateGalleryItem(editingGallery.id, galleryForm);
+                          showToast('Gallery image updated!');
+                        } else {
+                          await addGalleryItem(galleryForm);
+                          showToast('Gallery image added!');
+                        }
+                        setAddingGallery(false);
+                        setEditingGallery(null);
+                      } catch {
+                        showToast('Failed to save gallery image.');
                       }
-                      setAddingGallery(false);
-                      setEditingGallery(null);
                     }}
                     className="px-5 py-2 rounded-xl bg-gold-500 text-chocolate-950 text-xs font-bold"
                   >
@@ -1787,8 +1838,12 @@ export const AdminDashboard: React.FC = () => {
             <button
               type="button"
               onClick={async () => {
-                await updateSettings(settingsForm);
-                showToast('Website settings saved!');
+                try {
+                  await updateSettings(settingsForm);
+                  showToast('Website settings saved!');
+                } catch {
+                  showToast('Failed to save settings.');
+                }
               }}
               className="px-6 py-2.5 rounded-xl bg-gold-500 text-chocolate-950 font-bold text-xs shadow-md"
             >
@@ -1796,13 +1851,8 @@ export const AdminDashboard: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={async () => {
-                if (confirm('Reset website data to default sample data?')) {
-                  await resetToDefault();
-                  showToast('Reset to default data complete!');
-                }
-              }}
-              className="px-4 py-2.5 rounded-xl bg-cream-200 dark:bg-chocolate-800 text-chocolate-800 dark:text-cream-200 font-bold text-xs flex items-center gap-1.5"
+              onClick={() => setConfirmResetType('default')}
+              className="px-4 py-2.5 rounded-xl bg-cream-200 dark:bg-chocolate-800 text-chocolate-800 dark:text-cream-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset to Defaults</span>
@@ -1856,13 +1906,18 @@ export const AdminDashboard: React.FC = () => {
                 showToast('Password must be at least 6 characters');
                 return;
               }
-              localStorage.setItem(
-                'liyas_admin_saved_creds',
-                JSON.stringify({
-                  username: adminUsername,
-                  password: adminNewPassword,
-                })
-              );
+              try {
+                localStorage.setItem(
+                  'liyas_admin_saved_creds',
+                  JSON.stringify({
+                    username: adminUsername,
+                    password: adminNewPassword,
+                  })
+                );
+              } catch {
+                // ignore storage errors
+              }
+              updateAdminInfo({ username: adminUsername, isFirstLogin: false });
               try {
                 await fetch('/api/auth/change-password', {
                   method: 'POST',
@@ -2127,18 +2182,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="pt-2">
                 <button
                   type="button"
-                  onClick={async () => {
-                    if (
-                      confirm(
-                        'Reset and re-seed the compulsory database with clean artisanal products (with rates and zero 48h strings)?'
-                      )
-                    ) {
-                      await resetCompulsoryDatabase();
-                      showToast(
-                        'Compulsory database refreshed with fresh clean products!'
-                      );
-                    }
-                  }}
+                  onClick={() => setConfirmResetType('compulsory')}
                   className="w-full py-2.5 px-4 rounded-xl bg-gold-500/15 hover:bg-gold-500 text-gold-800 hover:text-chocolate-950 dark:text-gold-300 dark:hover:text-chocolate-950 text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer border border-gold-500/30"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -2210,6 +2254,78 @@ export const AdminDashboard: React.FC = () => {
                 <span>{deleting ? 'Deleting...' : 'Delete Permanently'}</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {confirmResetType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-chocolate-950/70 backdrop-blur-md">
+          <div className="bg-white dark:bg-chocolate-900 border-2 border-gold-500/40 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 relative">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-2xl bg-gold-500/15 text-gold-700 dark:text-gold-400 border border-gold-500/30">
+                <RotateCcw className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-serif text-lg font-bold text-chocolate-900 dark:text-cream-50">
+                  {confirmResetType === 'default'
+                    ? 'Reset Website to Default Data?'
+                    : 'Re-seed Clean Menu Database?'}
+                </h3>
+                <p className="text-xs text-chocolate-600 dark:text-cream-300">
+                  This restores all default artisanal bakery items.
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-chocolate-800 dark:text-cream-200 leading-relaxed">
+              {confirmResetType === 'default'
+                ? 'This will restore the default sample products, gallery showcase, customer testimonials, and store configuration.'
+                : 'This will reset and re-seed the database with clean artisanal products, pricing rates, and zero 48h strings.'}
+            </p>
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-gold-500/20">
+              <button
+                type="button"
+                onClick={() => setConfirmResetType(null)}
+                disabled={resetting}
+                className="px-4 py-2 rounded-xl bg-gray-200 dark:bg-chocolate-800 text-chocolate-800 dark:text-cream-100 text-xs font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReset}
+                disabled={resetting}
+                className="px-5 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 text-chocolate-950 text-xs font-bold flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{resetting ? 'Restoring...' : 'Confirm Reset'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-chocolate-950/85 backdrop-blur-md"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="relative max-w-2xl w-full bg-chocolate-900 rounded-3xl overflow-hidden border border-gold-500/40 p-3 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setPreviewImage(null)}
+              className="w-full py-2 mb-2 rounded-xl bg-chocolate-800 hover:bg-gold-500 hover:text-chocolate-950 text-cream-100 text-xs font-bold cursor-pointer transition-colors"
+            >
+              Close Reference Photo
+            </button>
+            <img
+              src={previewImage}
+              alt="Customer Reference Full View"
+              className="w-full max-h-[75vh] object-contain rounded-2xl bg-black"
+              referrerPolicy="no-referrer"
+            />
           </div>
         </div>
       )}

@@ -251,7 +251,11 @@ export const Home: React.FC = () => {
                     </span>
                     <div className="flex items-center gap-1 text-[11px] font-bold text-gold-600 dark:text-gold-400 bg-gold-500/10 dark:bg-gold-500/20 px-2 py-0.5 rounded-full">
                       <Star className="w-3 h-3 fill-gold-400 text-gold-500" />
-                      <span>{product.rating ? product.rating.toFixed(1) : '5.0'}</span>
+                      <span>
+                        {typeof product.rating === 'number' && Number.isFinite(product.rating)
+                          ? product.rating.toFixed(1)
+                          : '5.0'}
+                      </span>
                     </div>
                   </div>
                   <h3 className="font-serif text-lg font-bold text-[#3E2723] dark:text-cream-50 mt-1 line-clamp-1">
@@ -371,7 +375,9 @@ export const Home: React.FC = () => {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 text-gold-500">
-                    {Array.from({ length: t.rating }).map((_, idx) => (
+                    {Array.from({
+                      length: Math.max(0, Math.min(5, Math.round(Number(t.rating) || 5))),
+                    }).map((_, idx) => (
                       <Star
                         key={idx}
                         className="w-3.5 h-3.5 fill-gold-500 text-gold-500"
@@ -515,7 +521,8 @@ export const Home: React.FC = () => {
                   <div className="flex items-center gap-1 text-xs font-bold text-gold-600 dark:text-gold-400 mb-0.5">
                     <Star className="w-3.5 h-3.5 fill-gold-400 text-gold-500" />
                     <span>
-                      {quickViewProduct.rating
+                      {typeof quickViewProduct.rating === 'number' &&
+                      Number.isFinite(quickViewProduct.rating)
                         ? quickViewProduct.rating.toFixed(1)
                         : '5.0'}
                     </span>

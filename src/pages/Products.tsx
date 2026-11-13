@@ -151,7 +151,9 @@ export const Products: React.FC = () => {
                     <div className="flex items-center gap-1 text-[11px] font-bold text-gold-600 dark:text-gold-400 bg-gold-500/10 dark:bg-gold-500/20 px-2 py-0.5 rounded-full">
                       <Star className="w-3 h-3 fill-gold-400 text-gold-500" />
                       <span>
-                        {product.rating ? product.rating.toFixed(1) : '5.0'}
+                        {typeof product.rating === 'number' && Number.isFinite(product.rating)
+                          ? product.rating.toFixed(1)
+                          : '5.0'}
                       </span>
                       <span className="text-[9px] text-chocolate-600/80 dark:text-cream-300/80 font-normal">
                         ({product.ratingCount || 1})
@@ -270,7 +272,8 @@ export const Products: React.FC = () => {
                     <div className="flex items-center gap-1 text-xs font-bold text-gold-600 dark:text-gold-400">
                       <Star className="w-3.5 h-3.5 fill-gold-400 text-gold-500" />
                       <span>
-                        {detailProduct.rating
+                        {typeof detailProduct.rating === 'number' &&
+                        Number.isFinite(detailProduct.rating)
                           ? detailProduct.rating.toFixed(1)
                           : '5.0'}
                       </span>

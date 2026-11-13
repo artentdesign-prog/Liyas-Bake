@@ -54,7 +54,12 @@ export const AdminLogin: React.FC = () => {
         // fallback to local check
       }
 
-      const savedCredsRaw = localStorage.getItem('liyas_admin_saved_creds');
+      let savedCredsRaw: string | null = null;
+      try {
+        savedCredsRaw = localStorage.getItem('liyas_admin_saved_creds');
+      } catch {
+        // ignore storage read errors
+      }
       let matchesSaved = false;
       if (savedCredsRaw) {
         try {
@@ -112,10 +117,14 @@ export const AdminLogin: React.FC = () => {
     setLoading(true);
     setErrorMsg(null);
     try {
-      localStorage.setItem(
-        'liyas_admin_saved_creds',
-        JSON.stringify({ username, password: newPassword })
-      );
+      try {
+        localStorage.setItem(
+          'liyas_admin_saved_creds',
+          JSON.stringify({ username, password: newPassword })
+        );
+      } catch {
+        // ignore storage quota errors
+      }
       updateAdminInfo({ username, isFirstLogin: false });
       try {
         await fetch('/api/auth/change-password', {

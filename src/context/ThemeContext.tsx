@@ -9,9 +9,13 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isDark, setIsDark] = useState<boolean>(() => {
-    const saved = localStorage.getItem('liyas_theme');
-    if (saved !== null) {
-      return saved === 'dark';
+    try {
+      const saved = localStorage.getItem('liyas_theme');
+      if (saved !== null) {
+        return saved === 'dark';
+      }
+    } catch {
+      // ignore storage errors
     }
     return Boolean(
       window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -22,10 +26,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const root = document.documentElement;
     if (isDark) {
       root.classList.add('dark');
-      localStorage.setItem('liyas_theme', 'dark');
     } else {
       root.classList.remove('dark');
-      localStorage.setItem('liyas_theme', 'light');
+    }
+    try {
+      localStorage.setItem('liyas_theme', isDark ? 'dark' : 'light');
+    } catch {
+      // ignore storage errors
     }
   }, [isDark]);
 

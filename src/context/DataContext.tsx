@@ -263,11 +263,22 @@ const buildSpecialOrderFields = (o: SpecialOrder) => ({
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { token, isAuthenticated, firebaseUser, authReady, isFirebaseAdmin } =
-    useAuth();
+  const {
+    token,
+    isAuthenticated,
+    firebaseUser,
+    authReady,
+    isFirebaseAdmin,
+    isBootstrappedAdmin,
+  } = useAuth();
 
   const [siteData, setSiteData] = useState<SiteData>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    let saved: string | null = null;
+    try {
+      saved = localStorage.getItem(STORAGE_KEY);
+    } catch {
+      saved = null;
+    }
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -326,7 +337,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
   const autoSeedAttemptedRef = useRef(false);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(siteData));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(siteData));
+    } catch {
+      // ignore QuotaExceededError when storing large base64 images
+    }
   }, [siteData]);
 
   // Mandatory connection test on boot
@@ -343,7 +358,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
       totalGallery: data.gallery.length,
       totalTestimonials: data.testimonials.length,
       pendingOrders: orders.filter(
-        (o) => o.status.toLowerCase() === 'pending'
+        (o) => (o.status || 'pending').toLowerCase() === 'pending'
       ).length,
       totalOrders: orders.length,
       visitCount: data.settings.visitCount || 1840,
@@ -358,7 +373,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
   // Seed or sync complete SiteData to Firestore (verified admin only)
   const writeDataToFirestore = useCallback(
     async (dataToSync: SiteData, pruneMissing = false): Promise<boolean> => {
-      if (!firebaseUser?.emailVerified || !isFirebaseAdmin) return false;
+      if (!firebaseUser?.emailVerified || !isBootstrappedAdmin) return false;
       const uid = firebaseUser.uid;
       try {
         const [prodSnap, galSnap, testSnap, orderSnap] = await Promise.all([
@@ -499,7 +514,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         handleFirestoreError(err, OperationType.WRITE, 'batch-sync');
       }
     },
-    [firebaseUser, isFirebaseAdmin]
+    [firebaseUser, isBootstrappedAdmin]
   );
 
   const syncAllToFirestore = useCallback(async () => {
@@ -508,7 +523,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Auto-seed Firestore on first verified admin session if siteConfig/settings is missing
   useEffect(() => {
-    if (!authReady || !isFirebaseAdmin || !firebaseUser?.emailVerified) return;
+    if (!authReady || !isBootstrappedAdmin || !firebaseUser?.emailVerified) return;
     if (autoSeedAttemptedRef.current) return;
     autoSeedAttemptedRef.current = true;
 
@@ -525,7 +540,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         console.warn('Firestore initial check warning:', err);
       }
     })();
-  }, [authReady, isFirebaseAdmin, firebaseUser, writeDataToFirestore]);
+  }, [authReady, isBootstrappedAdmin, firebaseUser, writeDataToFirestore]);
 
   // Real-time Firestore listeners
   useEffect(() => {
@@ -616,7 +631,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       });
 
-      const productsRef = isFirebaseAdmin
+      const productsRef = isBootstrappedAdmin
         ? collection(db, 'products')
         : query(collection(db, 'products'), where('isHidden', '==', false));
 
@@ -653,7 +668,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         )
       );
 
-      const galleryRef = isFirebaseAdmin
+      const galleryRef = isBootstrappedAdmin
         ? collection(db, 'gallery')
         : query(collection(db, 'gallery'), where('isPublic', '==', true));
 
@@ -682,7 +697,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         )
       );
 
-      const testimonialsRef = isFirebaseAdmin
+      const testimonialsRef = isBootstrappedAdmin
         ? collection(db, 'testimonials')
         : query(collection(db, 'testimonials'), where('isApproved', '==', true));
 
@@ -714,7 +729,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
       );
 
       if (firebaseUser?.emailVerified) {
-        const ordersRef = isFirebaseAdmin
+        const ordersRef = isBootstrappedAdmin
           ? collection(db, 'specialOrders')
           : query(
               collection(db, 'specialOrders'),
@@ -763,7 +778,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
       cancelled = true;
       unsubscribers.forEach((fn) => fn());
     };
-  }, [authReady, firebaseUser, isFirebaseAdmin]);
+  }, [authReady, firebaseUser, isBootstrappedAdmin]);
 
   const refreshPublicData = useCallback(async () => {
     if (firestoreSyncedRef.current) return;
@@ -845,10 +860,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const resetToDefault = async (): Promise<boolean> => {
     setSiteData(defaultData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
-    if (firebaseUser?.emailVerified && isFirebaseAdmin) {
-      await writeDataToFirestore(defaultData);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+    } catch {
+      // ignore storage errors
     }
+    try {
+      await fetch('/api/database/reset', { method: 'POST' });
+    } catch {
+      // ignore if offline
+    }
+    if (firebaseUser?.emailVerified && isBootstrappedAdmin) {
+      await writeDataToFirestore(defaultData, true);
+    }
+    await refreshDatabaseStatus();
     return true;
   };
 
@@ -859,9 +884,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         const json = await res.json();
         if (json.data) {
           setSiteData(json.data);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(json.data));
-          if (firebaseUser?.emailVerified && isFirebaseAdmin) {
-            await writeDataToFirestore(json.data);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(json.data));
+          } catch {
+            // ignore storage errors
+          }
+          if (firebaseUser?.emailVerified && isBootstrappedAdmin) {
+            await writeDataToFirestore(json.data, true);
           }
         }
       }
@@ -1212,8 +1241,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         const prodSnap = await getDoc(prodRef);
         if (prodSnap.exists()) {
           const data = prodSnap.data();
-          const currentCount = Number(data.ratingCount) || 1;
-          const currentRating = Number(data.rating) || 5;
+          const currentCount =
+            typeof data.ratingCount === 'number' &&
+            !Number.isNaN(data.ratingCount)
+              ? data.ratingCount
+              : 0;
+          const currentRating =
+            typeof data.rating === 'number' && !Number.isNaN(data.rating)
+              ? data.rating
+              : 5;
           const nextCount = currentCount + 1;
           const nextRating = Number(
             ((currentRating * currentCount + cleanRating) / nextCount).toFixed(1)
@@ -1718,7 +1754,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
       testimonials: [],
       specialOrders: [],
     });
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore storage errors
+    }
 
     if (firebaseUser?.emailVerified && isFirebaseAdmin) {
       try {

@@ -17,24 +17,37 @@ import { useData } from '../context/DataContext';
 
 export const StoreDirections: React.FC = () => {
   const { siteData } = useData();
-  const { settings } = siteData;
+  const { settings, storeDirections } = siteData;
   const [copied, setCopied] = useState(false);
   const [locating, setLocating] = useState(false);
   const [customOrigin, setCustomOrigin] = useState('');
 
   const address =
+    storeDirections?.address ||
     settings.address ||
     'jolly mohalla masjid road pvr road bengaluru karnataka 560053';
+  const landmark =
+    storeDirections?.landmark ||
+    'Near PVR Road Junction, Masjid Road, Jolly Mohalla, Chickpet Area, Bengaluru 560053';
+  const mapEmbedUrl =
+    storeDirections?.mapEmbedUrl ||
+    'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3888.084478330761!2d77.5746!3d12.9664!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae15e12f67dbb9%3A0x7d01878d6b8b0e71!2sJolly%20Mohalla%2C%20Chickpet%2C%20Bengaluru%2C%20Karnataka%20560053!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin';
   const phone = settings.phone || '+91 8431126242';
   const pickupNotice =
     settings.pickupNotice ||
     'THE FOOD WILL NOT GET TO YOUR HOME IT SHOULD COME AND COLLECT FROM GIVEN ADDRESS';
   const encodedDest = encodeURIComponent(address);
 
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+  const handleCopyAddress = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(address);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setCopied(false);
+    }
   };
 
   const handleShareWhatsApp = () => {
@@ -169,8 +182,7 @@ export const StoreDirections: React.FC = () => {
                 {address}
               </p>
               <p className="text-xs text-cream-300/80">
-                Landmark: Near PVR Road Junction, Masjid Road, Jolly Mohalla, Chickpet
-                Area, Bengaluru 560053
+                Landmark: {landmark}
               </p>
             </div>
 
@@ -289,7 +301,7 @@ export const StoreDirections: React.FC = () => {
         <div className="rounded-2xl overflow-hidden border border-gold-500/30 shadow-xl aspect-16/9 sm:aspect-21/9 w-full bg-chocolate-950 relative">
           <iframe
             title="Liya's Bake Store Location Map"
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3888.084478330761!2d77.5746!3d12.9664!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae15e12f67dbb9%3A0x7d01878d6b8b0e71!2sJolly%20Mohalla%2C%20Chickpet%2C%20Bengaluru%2C%20Karnataka%20560053!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+            src={mapEmbedUrl}
             className="w-full h-full border-0"
             allowFullScreen
             loading="lazy"
